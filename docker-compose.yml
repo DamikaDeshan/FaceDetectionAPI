@@ -1,0 +1,40 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  ai-python:
+    build: ./ai-python
+    container_name: ai-python
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+
+  controller:
+    build: ./backend-node
+    container_name: controller
+    restart: unless-stopped
+    environment:
+      - PORT=3000
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - MONGO_URI=mongodb://mongo:27017/emofilter
+      - MONGO_DB=emofilter
+      - TTL_SECONDS=${TTL_SECONDS}
+      - AI_SERVICE_URL=http://ai-python:5000
+      - REQUIRE_AUTH=${REQUIRE_AUTH}
+      - JWT_SECRET=${JWT_SECRET}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
+    depends_on:
+      - mongo
+      - ai-python
+    ports:
+      - "3000:3000"
+volumes:
+  mongo-data:
+
